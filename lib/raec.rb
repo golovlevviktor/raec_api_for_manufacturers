@@ -68,7 +68,7 @@ module Raec
 
 
   # Запрос на изменение свойства
-  def self.change_property_value(raec_id, property, value)
+  def self.send_property_value(raec_id, property, value)
 
     body = Hash["#{property}": value]
 
@@ -76,7 +76,7 @@ module Raec
   end
 
   # Запрос на редактирование связей между продуктами
-  def self.edit_relation(raec_id, child_raec_id, related_type)
+  def self.send_relation(raec_id, child_raec_id, related_type)
     data = Hash[childProductId: child_raec_id, related_type:related_type]
     body = Hash[relate: data]
 
@@ -84,25 +84,27 @@ module Raec
   end
 
   # Запрос на редактирование произваольного ETIM св-ва
-  def self.edit_property(raec_id, feature_id, value)
+  def self.send_feature(raec_id, feature_id, value)
     body = Hash[featureId:feature_id, value:value]
 
     request(get_product_url(raec_id), body)
   end
 
   # Запрос на редактирование произваольного параметра продукта
-  def self.edit_attribute(raec_id, attr_name, value)
+  def self.send_attribute(raec_id, attr_name, value)
     data = Hash["#{attr_name}":value]
 
     request(get_product_url(raec_id), body)
   end
 
   # Загрузка изображения товара
-  def self.upload_image(raec_id, image_path, debug = self.debug)
+  def self.send_image(raec_id, image_path, debug = self.debug)
 
-    body = Hash[image: Faraday::UploadIO.new(image_path, 'image/jpeg')]
+    body = Hash["image": Faraday::UploadIO.new(image_path, 'image/jpeg')]
 
-    request(get_product_url(raec_id), body)
+    # p payload[:image] = Faraday::UploadIO.new(image_path, 'image/jpeg')
+
+    request(get_product_url(raec_id), body, true)
   end
 
 
@@ -118,18 +120,22 @@ module Raec
   # TODO убрать !!! DEBUG = true
   # Собственно отправка запроса
   # @return [status, body]
-  def self.request (path, body, debug = self.debug)
+  def self.request (path, body, multipart = false, debug = self.debug)
 
 
     p "Path: #{path}"
     p "Sended data: #{body}"
 
-    conn = Faraday.new( :url => self.request_url,:ssl => {:verify => self.ssl_enabled})
-    # do |faraday|
-    #   faraday.request  :url_encoded             # form-encode POST params
-    #   faraday.response :logger                  # log requests to STDOUT
-    #   faraday.adapter  Faraday.default_adapter  # make requests with Net::HTTP
-    # end
+    conn = Faraday.new( :url => self.request_url,:ssl => {:verify => self.ssl_enabled}) do |faraday|
+      if multipart
+        faraday.request :multipart
+      end
+      faraday.request  :url_encoded             # form-encode POST params
+      faraday.response :logger                  # log requests to STDOUT
+      faraday.adapter  Faraday.default_adapter  # make requests with Net::HTTP
+    end
+
+
 
     resp = conn.post do |req|
       req.url path
