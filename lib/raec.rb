@@ -69,9 +69,9 @@ module Raec
 
   # Запрос на изменение свойства
   def self.send_property_value(raec_id, property, value)
-
-    body = Hash["#{property}": value]
-
+    
+    data = Hash["#{property}": value]
+    body = Hash[data: data]
     request(get_product_url(raec_id), body)
   end
 
