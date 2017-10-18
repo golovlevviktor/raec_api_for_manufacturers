@@ -92,7 +92,7 @@ module Raec
 
   # Запрос на редактирование произваольного параметра продукта
   def self.send_attribute(raec_id, attr_name, value)
-    data = Hash["#{attr_name}":value]
+    body = Hash["#{attr_name}":value]
 
     request(get_product_url(raec_id), body)
   end
